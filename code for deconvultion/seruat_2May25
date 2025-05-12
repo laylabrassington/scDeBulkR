@@ -1,0 +1,46 @@
+# Convert `.h5ad` to Seurat object
+library(Seurat)
+library(zellkonverter)
+library(SummarizedExperiment)
+
+# Read .h5ad file into R
+adata <- readH5AD("~/scRNA/filtered_adata.h5ad") #the filtered one we made above
+colnames(colData(adata))[colnames(colData(adata)) == "cell_type_high"] <- "cell_type"
+
+# Convert to Seurat object
+tmp=adata@assays@data@listData[["X"]]
+seurat_obj <- CreateSeuratObject(counts = tmp)
+
+# Extract cell_type column
+cell_type <- colData(adata)$cell_type
+
+# Add to Seurat object's metadata
+seurat_obj$cell_type <- cell_type
+
+# Normalize data
+seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
+
+#Replace Inf and NA with 0
+data_mat <- GetAssayData(seurat_obj, slot = "data")
+data_mat[is.na(data_mat)] <- 0
+data_mat[is.infinite(data_mat)] <- 0
+seurat_obj <- SetAssayData(seurat_obj, slot = "data", new.data = data_mat)
+
+# Extract the expression matrix
+ref_matrix <- AverageExpression(seurat_obj, group.by = "cell_type") 
+B <- ref_matrix$RNA
+
+#make sure genes in both datasets match (should have been done last time but still check)
+e_this <- readRDS("~/scRNA/e_this.rds")
+common_genes <- intersect(rownames(e_this), rownames(B))
+e_this <- e_this[common_genes, ]
+B <- B[common_genes, ]
+
+# Convert e_this and B to expression matrix (from ExpressionSet or similar)
+e_this=as.matrix(e_this)
+B=as.matrix(B)
+
+# Run deconvolution
+library(bseqsc)
+bseq <- bseqsc:::bseqsc_proportions(e_this, B, verbose = TRUE, QN = FALSE)
+out <- cbind(pData(e_this), t(coef(bseq)))

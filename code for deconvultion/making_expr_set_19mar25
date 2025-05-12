@@ -1,0 +1,52 @@
+library(Biobase)
+
+# Bulk RNA-seq expression data
+e.keep <- read.delim('~/scRNA/bulk_data_19Jun24.txt', row.names = 1, header = TRUE) # Read in bulk RNA seq data
+
+keep.genes <- rownames(e.keep) # Determine gene list in bulk data
+
+# Read metadata
+meta <- read.delim('~/scRNA/bulk_data_metadata.txt', header = TRUE) # Reading metadata from .txt
+
+# Clean up the column names in the expression data to match meta$TID
+colnames(e.keep) <- gsub("^TID0*(\\d+)$", "\\1", colnames(e.keep))
+
+# Add setdiff
+setdiff(colnames(e.keep), meta$TID)
+setdiff(meta$TID, colnames(e.keep))
+
+meta$TID <- as.character(meta$TID)
+
+meta <- meta[order(match(meta$TID, colnames(e.keep))),]
+
+# Check the intersection of the sample IDs (TIDs) between metadata and expression data
+matching_samples <- intersect(colnames(e.keep), meta$TID)
+if (length(matching_samples) == 0) {
+  stop("No matching samples between 'e.keep' and 'meta$TID'.")
+}
+
+# Subset the expression matrix for kept genes and matching samples
+expression_matrix <- e.keep[keep.genes, colnames(e.keep) %in% matching_samples]
+if (ncol(expression_matrix) == 0) {
+  stop("After subsetting, there are no samples in the expression matrix.")
+}
+
+# Create AnnotatedDataFrame for phenoData
+meta_sub <- meta[meta$TID %in% matching_samples, ]
+
+# Ensure row names in meta_sub correspond to sample names
+rownames(meta_sub) <- meta_sub$TID
+
+# Check if the sample names match between expression matrix and phenoData
+identical(rownames(meta_sub), colnames(expression_matrix))
+
+phenoData <- AnnotatedDataFrame(data = meta_sub)
+
+# Create ExpressionSet object
+e.this <- ExpressionSet(
+  assayData = as.matrix(expression_matrix),
+  phenoData = phenoData
+)
+
+# Save e.this as an .rds object
+saveRDS(e.this, file = "~/scRNA/e_this.rds")

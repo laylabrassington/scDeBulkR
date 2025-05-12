@@ -1,0 +1,76 @@
+sc_markers <- read.csv("sc_markers_26mar25.csv")
+
+#figure out a set of genes that matches between single cell data (sc_markers) and bulk data (the ~54k genes in e.this)
+
+# Load the e_this RDS file
+e.this <- readRDS("e_this.rds")
+
+# Extract gene names from sc_markers
+sc_genes <- sc_markers$names
+
+# Extract gene names from e.this
+bulk_genes <- featureNames(e.this)
+
+# Find the intersection of the two gene lists
+matching_genes <- intersect(sc_genes, bulk_genes)
+
+# Print the matching genes
+print(matching_genes)
+
+# Filter sc_markers to include only matching genes
+filtered_sc_markers <- sc_markers[sc_markers$names %in% matching_genes, ]
+
+# Filter e.this to include only matching genes
+filtered_e.this <- e.this[matching_genes, ]
+
+# Filter markers based on R2cutoff and specificity_cutoff (FIX bc cell_type and specificity aren't there in sc_markers)
+R2cutoff <- 0.1
+specificity_cutoff <- 0.1
+
+markers <- list()
+celltypes <- levels(as.factor(filtered_sc_markers$group))
+for (i in seq_along(celltypes)) {
+  markers[[i]] <- subset(
+    filtered_sc_markers,
+    group == celltypes[i] &
+   
+      pvals_adj > specificity_cutoff
+  )$names
+}
+names(markers) <- celltypes
+
+# Save markers as RDS file
+
+# Define the file path where you want to save the list
+save_path <- "~/scRNA/markers.rds"
+# Save the list to the file
+saveRDS(markers, file = save_path)
+
+# Save markers as CSV file
+# Load necessary library
+library(dplyr)
+
+# Find the maximum length of the list elements
+max_length <- max(sapply(markers, length))
+
+# Create a data frame by padding the shorter vectors with NA
+markers_df <- data.frame(lapply(markers, function(x) {
+  length(x) <- max_length
+  return(x)
+}), check.names = FALSE)
+
+# Save the data frame to a CSV file
+write.csv(markers_df, file = "markers.csv", row.names = FALSE)
+
+# Create csv file of all unique genes present in markers
+# Combine all elements of the markers list into a single vector
+all_genes <- unlist(markers)
+
+# Remove duplicate genes to get a list of unique genes
+unique_genes <- unique(all_genes)
+
+# Print the list of unique genes
+print(unique_genes)
+
+# save the unique genes to a CSV file
+write.csv(unique_genes, file = "unique_genes.csv", row.names = FALSE)
