@@ -1,7 +1,7 @@
 # bulk_rnaseq_deconvo
 
 
-## step 1: bulk_expr_set
+## step 1: make_bulk_expr_set
 This code requires: 
 1. bulk RNA-seq expression matrix file (bulk_data_19Jun24.txt)
 2. metadata file (bulk_data_metadata.txt)
