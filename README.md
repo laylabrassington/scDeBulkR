@@ -24,7 +24,7 @@ This code generates:
 2. Differential expression results identifying marker genes per cell type using t-test 
 3. A .csv file (sc_markers.csv) listing marker genes for each cell type
 
-## step 3: get_matching_genes_2Apr_25
+## step 3: matching_bulk_sc_genes
 This code requires:
 1. marker gene list from single-cell data (sc_markers_26mar25.csv)
 2. bulk RNA-seq ExpressionSet object (e_this.rds)
