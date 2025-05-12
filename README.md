@@ -17,7 +17,7 @@ This code generates:
 This code requires:
 1. StdEnv/2020 and python/3.11.2 modules loaded
 2. python packages: anndata, scanpy, numpy, pandas, and celltypist
-3. A raw single-cell RNA-seq dataset in .h5ad format (raw_sc_data_24jul24.h5ad)
+3. raw single-cell RNA-seq dataset in .h5ad format (raw_sc_data_24jul24.h5ad)
 
 This code generates:
 1. filtered AnnData object (adata_filtered) excluding cell types with only one cell
