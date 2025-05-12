@@ -36,7 +36,19 @@ This code generates:
 3. .rds file (markers.rds) and .csv file (markers.csv) containing the cell-type-specific marker genes
 4. .csv file (unique_genes.csv) containing all unique marker genes across all cell types
 
-## step 4: 
+## step 4: 4:16:25 filtered adata
+This code requires:
+1. python packages: anndata, scanpy, celltypist, numpy, and pandas
+2. single-cell RNA-seq dataset (raw_sc_data_24jul24.h5ad)
+3. CSV file of unique marker genes (unique_genes.csv)
+
+This code generates:
+1. filtered AnnData object (adata_filtered) containing only genes matching the marker list
+2. filtered_adata.h5ad which contains the filtered gene expression data
+
+## step 5: seurat_2May25
+
+
 
 
 
