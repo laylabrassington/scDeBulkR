@@ -14,4 +14,14 @@ This code generates:
 4. e_this.rds that stores the ExpressionSet object 
 
 ## step 2: making_sc_markers
+This code requires:
+1. StdEnv/2020 and python/3.11.2 modules loaded
+2. python packages: anndata, scanpy, numpy, pandas, and celltypist
+3. A raw single-cell RNA-seq dataset in .h5ad format (raw_sc_data_24jul24.h5ad)
+
+This code generates:
+1. A filtered AnnData object (adata_filtered) excluding cell types with only one cell
+2. Differential expression results identifying marker genes per cell type using t-test 
+3. A .csv file (sc_markers.csv) listing marker genes for each cell type
+
 
