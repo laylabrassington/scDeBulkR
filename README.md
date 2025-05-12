@@ -33,8 +33,8 @@ This code requires:
 This code generates:
 1. filtered list of genes present in both single-cell and bulk RNA-seq datasets
 2. list of marker genes per cell type (filtered by adjusted p-value threshold)
-3. .rds file (markers.rds) and .csv file (markers.csv) containing the cell-type-specific marker genes
-4. .csv file (unique_genes.csv) containing all unique marker genes across all cell types
+3. markers.rds and markers.csv containing the cell-type-specific marker genes
+4. unique_genes.csv containing all unique marker genes across all cell types
 
 ## step 4: 4:16:25 filtered adata
 This code requires:
@@ -47,9 +47,12 @@ This code generates:
 2. filtered_adata.h5ad which contains the filtered gene expression data
 
 ## step 5: seurat_2May25
+This code requires:
+1. R packages: Seurat, zellkonverter, SummarizedExperiment, and bseqsc.
+2. filtered_adata.h5ad and e_this.rds
 
-
-
-
-
-
+This code generates:
+1. normalized Seurat object (seurat_obj) with cell type metadata
+2. reference matrix (B) of average expression by cell type
+3. matched gene expression matrices from bulk and single-cell data
+4. estimated cell type proportions in bulk samples (out)
