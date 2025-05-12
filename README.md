@@ -3,14 +3,14 @@
 
 ## step 1: making_expr_set_19mar25
 This code requires: 
-1. A bulk RNA-seq expression matrix file (bulk_data_19Jun24.txt)
-2. A metadata file (bulk_data_metadata.txt)
-3. A Biobase R package
+1. bulk RNA-seq expression matrix file (bulk_data_19Jun24.txt)
+2. metadata file (bulk_data_metadata.txt)
+3. Biobase R package
 
 This code generates:
-1. A cleaned expression_matrix containing only samples present in both the metadata and expression data.
-2. An AnnotatedDataFrame for the phenotype data (phenoData).
-3. e.this which combined expression and phenotype data.
+1. cleaned expression_matrix containing only samples present in both the metadata and expression data
+2. AnnotatedDataFrame for the phenotype data (phenoData)
+3. e.this which combined expression and phenotype data
 4. e_this.rds that stores the ExpressionSet object 
 
 ## step 2: making_sc_markers
@@ -20,8 +20,24 @@ This code requires:
 3. A raw single-cell RNA-seq dataset in .h5ad format (raw_sc_data_24jul24.h5ad)
 
 This code generates:
-1. A filtered AnnData object (adata_filtered) excluding cell types with only one cell
+1. filtered AnnData object (adata_filtered) excluding cell types with only one cell
 2. Differential expression results identifying marker genes per cell type using t-test 
 3. A .csv file (sc_markers.csv) listing marker genes for each cell type
+
+## step 3: get_matching_genes_2Apr_25
+This code requires:
+1. marker gene list from single-cell data (sc_markers_26mar25.csv)
+2. bulk RNA-seq ExpressionSet object (e_this.rds)
+3. dplyr R package
+   
+This code generates:
+1. filtered list of genes present in both single-cell and bulk RNA-seq datasets
+2. list of marker genes per cell type (filtered by adjusted p-value threshold)
+3. .rds file (markers.rds) and .csv file (markers.csv) containing the cell-type-specific marker genes
+4. .csv file (unique_genes.csv) containing all unique marker genes across all cell types
+
+## step 4: 
+
+
 
 
