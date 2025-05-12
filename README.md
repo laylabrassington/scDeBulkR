@@ -46,7 +46,7 @@ This code generates:
 1. filtered AnnData object (adata_filtered) containing only genes matching the marker list
 2. filtered_adata.h5ad which contains the filtered gene expression data
 
-## step 5: seurat_2May25
+## step 5: run_deconvolution
 This code requires:
 1. R packages: Seurat, zellkonverter, SummarizedExperiment, and bseqsc.
 2. filtered_adata.h5ad and e_this.rds
