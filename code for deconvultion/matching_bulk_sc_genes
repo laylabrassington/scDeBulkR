@@ -1,3 +1,5 @@
+library(Biobase)
+
 sc_markers <- read.csv("sc_markers_26mar25.csv")
 
 #figure out a set of genes that matches between single cell data (sc_markers) and bulk data (the ~54k genes in e.this)
