@@ -14,7 +14,6 @@ from collections import Counter
 adata = ad.read_h5ad('/filepath/raw_sc_data_24jul24.h5ad')
 
 # need to remove cells that only have 1 sample 
-from collections import Counter
 # Count the number of cells per group
 group_counts = Counter(adata.obs['cell_type_high'])
 
