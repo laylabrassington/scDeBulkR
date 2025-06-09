@@ -8,6 +8,7 @@ import scanpy as sc
 import numpy as np
 import pandas as pd
 import celltypist
+from collections import Counter
 
 # Load the single-cell data
 adata = ad.read_h5ad('/filepath/raw_sc_data_24jul24.h5ad')
