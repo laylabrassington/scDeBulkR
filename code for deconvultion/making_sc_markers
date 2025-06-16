@@ -25,6 +25,11 @@ adata_filtered = adata[adata.obs['cell_type_high'].isin(valid_groups)].copy()
 
 adata_filtered.var.index = adata_filtered.var.gene_name
 
+# (optional) if adata needs to be re-normalized
+sc.pp.normalize_total(adata_filtered, target_sum=1e4)
+sc.pp.log1p(adata_filtered)
+adata_filtered.raw = adata_filtered
+
 # Identify markers by cell type
 # Run rank_genes_groups on the filtered dataset
 sc.tl.rank_genes_groups(adata_filtered, 'cell_type_high', method='t-test')
