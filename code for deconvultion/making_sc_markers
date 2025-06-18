@@ -41,4 +41,4 @@ groups = adata_filtered.obs['cell_type_high'].unique()
 markers_list = [sc.get.rank_genes_groups_df(adata_filtered, group=grp) for grp in groups]
 markers = pd.concat(markers_list, keys=groups, names=['group'])
 
-markers.to_csv("/filepath/sc_markers.csv", index=False)
+markers.reset_index().to_csv("/filepath/sc_markers.csv", index=False)
