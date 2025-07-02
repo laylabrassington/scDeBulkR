@@ -13,15 +13,25 @@ from collections import Counter
 # Load the single-cell data
 adata = ad.read_h5ad('/filepath/raw_sc_data_24jul24.h5ad')
 
+# Define PBMC cell types based on dataset's categories
+pbmc_cell_types = [
+    "B cells",
+    "DC",
+    "ILC",
+    "Monocytes",
+    "Mono-mac",
+    "Plasma cells",
+    "T cells",
+    "pDC"
+]
+
+adata_pbmc = adata[adata.obs['cell_type_high'].isin(pbmc_cell_types)].copy()
+
 # need to remove cells that only have 1 sample 
-# Count the number of cells per group
-group_counts = Counter(adata.obs['cell_type_high'])
-
-# Get groups with more than one cell
+# Remove groups with only 1 cell to avoid spurious markers
+group_counts = Counter(adata_pbmc.obs['cell_type_high'])
 valid_groups = [group for group, count in group_counts.items() if count > 1]
-
-# Subset AnnData to exclude single-cell groups
-adata_filtered = adata[adata.obs['cell_type_high'].isin(valid_groups)].copy()
+adata_filtered = adata_pbmc[adata_pbmc.obs['cell_type_high'].isin(valid_groups)].copy()
 
 adata_filtered.var.index = adata_filtered.var.gene_name
 
