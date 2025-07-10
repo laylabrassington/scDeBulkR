@@ -14,16 +14,33 @@ from collections import Counter
 adata = ad.read_h5ad('/filepath/raw_sc_data_24jul24.h5ad')
 
 # Define PBMC cell types based on dataset's categories
-pbmc_cell_types = [
-    "B cells",
-    "DC",
-    "ILC",
-    "Monocytes",
-    "Mono-mac",
-    "Plasma cells",
-    "T cells",
-    "pDC"
-]
+pbmc_celltypes = [
+...     # B cells
+...     "Age-associated B cells", "B cells", "Memory B cells", "Naive B cells",
+...     "Plasma cells", "Plasmablasts", "Transitional B cells",
+...     
+...     # T cells
+...     "CD8a/a (cytotoxic T cells)", "Follicular helper T cells", 
+...     "MAIT cells", "NKT cells", "Regulatory T cells (Tregs)",
+...     "T(agonist) (activated T cells)", "Tcm/Naive cytotoxic T cells",
+...     "Tcm/Naive helper T cells", "Tem/Effector helper T cells",
+...     "Tem/Temra cytotoxic T cells", "Type 1 helper T cells (Th1)",
+...     "Type 17 helper T cells (Th17)", "gamma-delta T cells",
+...     "CRTAM+ gamma-delta T cells", "T cells",
+...     
+...     # NK cells
+...     "CD16+ NK cells", "CD16- NK cells", "NK cells",
+...     
+...     # Monocytes/Macrophages (ONLY blood-associated)
+...     "Classical monocytes", "Non-classical monocytes",
+...     "Monocytes", "Mono-mac",
+...     
+...     # Dendritic cells
+...     "DC1", "DC2", "DC", "pDC",
+...     
+...     # ILC
+...     "ILC3", "ILC"
+... ]
 
 adata_pbmc = adata[adata.obs['cell_type_high'].isin(pbmc_cell_types)].copy()
 
