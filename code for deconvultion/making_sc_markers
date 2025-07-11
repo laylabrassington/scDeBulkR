@@ -14,8 +14,8 @@ from collections import Counter
 adata = ad.read_h5ad('/filepath/raw_sc_data_24jul24.h5ad')
 
 # Define PBMC cell types 
-pbmc_celltypes = [ "Age-associated B cells", "B cells", "Memory B cells", "Naive B cells",
-"Plasma cells", "Plasmablasts", "Transitional B cells",
+pbmc_celltypes = [ "Age-associated B cells", "B cells", "Memory B cells", 
+"Naive B cells", "Plasma cells", "Plasmablasts", "Transitional B cells",
 "CD8a/a (cytotoxic T cells)", "Follicular helper T cells", 
 "MAIT cells", "NKT cells", "Regulatory T cells (Tregs)",
 "T(agonist) (activated T cells)", "Tcm/Naive cytotoxic T cells",
