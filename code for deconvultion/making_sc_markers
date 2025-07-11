@@ -14,18 +14,21 @@ from collections import Counter
 adata = ad.read_h5ad('/filepath/raw_sc_data_24jul24.h5ad')
 
 # Define PBMC cell types 
-pbmc_celltypes = [ "Age-associated B cells", "B cells", "Memory B cells", 
-"Naive B cells", "Plasma cells", "Plasmablasts", "Transitional B cells",
-"CD8a/a (cytotoxic T cells)", "Follicular helper T cells", 
-"MAIT cells", "NKT cells", "Regulatory T cells (Tregs)",
-"T(agonist) (activated T cells)", "Tcm/Naive cytotoxic T cells",
-"Tcm/Naive helper T cells", "Tem/Effector helper T cells",
-"Tem/Temra cytotoxic T cells", "Type 1 helper T cells (Th1)",
-"Type 17 helper T cells (Th17)", "gamma-delta T cells",
-"CRTAM+ gamma-delta T cells", "T cells",
-"CD16+ NK cells", "CD16- NK cells", "NK cells",
-"Classical monocytes", "Non-classical monocytes",
-"Monocytes", "Mono-mac", "DC1", "DC2", "DC", "pDC", "ILC3", "ILC"]
+pbmc_types <- c(
+  "Age-associated B cells", "B cells", "CD16- NK cells", "CD16+ NK cells", 
+  "Classical monocytes", "CRTAM+ gamma-delta T cells", "Cycling T cells",
+  "DC1", "DC2", "Follicular helper T cells",
+  "gamma-delta T cells", "Germinal center B cells", "HSC/MPP", "ILC3",
+  "Intermediate macrophages", "Intestinal macrophages", "Macrophages",
+  "MAIT cells", "Megakaryocytes/platelets", "Memory B cells",
+  "Memory CD4+ cytotoxic T cells", "Mid erythroid", "Mono-mac", "Monocytes",
+  "Naive B cells", "NK cells", "NKT cells", "Non-classical monocytes", "pDC",
+  "Plasma cells", "Plasmablasts", "Regulatory T cells", "T(agonist)",
+  "Tcm/Naive cytotoxic T cells", "Tcm/Naive helper T cells",
+  "Tem/Effector helper T cells", "Tem/Temra cytotoxic T cells",
+  "Tem/Trm cytotoxic T cells", "Transitional B cells", "Treg(diff)",
+  "Trm cytotoxic T cells", "Type 1 helper T cells", "Type 17 helper T cells"
+)
 
 adata_pbmc = adata[adata.obs['cell_type_high'].isin(pbmc_cell_types)].copy()
 
