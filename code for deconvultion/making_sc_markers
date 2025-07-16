@@ -15,16 +15,17 @@ adata = ad.read_h5ad('/filepath/raw_sc_data_24jul24.h5ad')
 
 # Define PBMC cell types 
 pbmc_types = ["Age-associated B cells", "B cells", "CD16- NK cells", "CD16+ NK cells",
-"Classical monocytes", "CRTAM+ gamma-delta T cells", "Cycling T cells", "DC1", "DC2", 
-"Double-negative thymocytes", "Double-positive thymocytes", "Early lymphoid/T lymphoid", 
-"Epithelial cells", "Follicular helper T cells", "gamma-delta T cells", "Germinal center B cells", 
-"HSC/MPP", "ILC3", "Intermediate macrophages", "Intestinal macrophages", "Macrophages",
-"MAIT cells", "Megakaryocytes/platelets", "Memory B cells", "Memory CD4+ cytotoxic T cells", 
-"Mid erythroid", "Mono-mac", "Monocytes", "Naive B cells", "NK cells", "NKT cells", 
-"Non-classical monocytes", "pDC", "Plasma cells", "Plasmablasts", "Regulatory T cells", 
-"T(agonist)", "Tcm/Naive cytotoxic T cells", "Tcm/Naive helper T cells","Tem/Effector helper T cells", 
-"Tem/Temra cytotoxic T cells", "Tem/Trm cytotoxic T cells", "Transitional B cells", 
-"Treg(diff)", "Trm cytotoxic T cells", "Type 1 helper T cells", "Type 17 helper T cells"]
+                "Classical monocytes", "CRTAM+ gamma-delta T cells", "Cycling T cells", 
+                "DC1", "DC2", "Follicular helper T cells", "gamma-delta T cells", 
+                "Germinal center B cells", "ILC3",
+                "Macrophages", "MAIT cells", "Memory B cells",
+                "Memory CD4+ cytotoxic T cells", "Monocytes", "Naive B cells", "NK cells",
+                "NKT cells", "Non-classical monocytes", "pDC", "Plasmablasts",
+                "Regulatory T cells", "T(agonist)", "Tcm/Naive cytotoxic T cells",
+                "Tcm/Naive helper T cells", "Tem/Effector helper T cells",
+                "Tem/Temra cytotoxic T cells", "Tem/Trm cytotoxic T cells",
+                "Transitional B cells", "Treg(diff)", "Trm cytotoxic T cells",
+                "Type 1 helper T cells", "Type 17 helper T cells"]
 
 adata_pbmc = adata[adata.obs['cell_type_high'].isin(pbmc_cell_types)].copy()
 
