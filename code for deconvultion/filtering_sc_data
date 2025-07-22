@@ -15,4 +15,6 @@ markers = pd.read_csv("/filepath/unique_genes.csv")
 marker_genes = markers['x'].unique()          
 adata.var.index = adata.var['gene_name'] 
 
-adata_filtered = adata[:, adata.var_names.isin(marker_genes)] adata_filtered.write_h5ad("filtered_adata.h5ad")
+adata_filtered = adata[:, adata.var_names.isin(marker_genes)] 
+
+adata_filtered.write_h5ad("filtered_adata.h5ad")
