@@ -1,4 +1,4 @@
-# bulk_rnaseq_deconvo
+# scDeBulk
 
 
 ## step 1: make_bulk_expr_set
