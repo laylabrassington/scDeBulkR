@@ -1,4 +1,4 @@
-# scDeBulk
+# scDeBulkR
 
 
 ## step 1: make_bulk_expr_set
