@@ -1,5 +1,11 @@
 # scDeBulkR
 
+## step 0: (*added 6oct25) filtering single cell data to remove outliers 
+This code requires: 
+1. raw single-cell RNA-seq dataset in .h5ad format (raw_sc_data_24jul24.h5ad)
+
+This code generates:
+1. cleaned single-cell RNA-seq dataset in .h5ad format (adata_highconf_filtered_6oct25.h5ad)
 
 ## step 1: make_bulk_expr_set
 This code requires: 
