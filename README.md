@@ -44,7 +44,7 @@ This code generates:
 3. markers.rds and markers.csv containing the cell-type-specific marker genes
 4. unique_genes.csv containing all unique marker genes across all cell types
 
-## step 4: filtering_sc_data
+## step 4: filtering_sc_data_genes
 This code requires:
 1. python packages: anndata, scanpy, celltypist, numpy, and pandas
 2. single-cell RNA-seq dataset (raw_sc_data_24jul24.h5ad)
