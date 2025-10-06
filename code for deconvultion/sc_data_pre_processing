@@ -222,5 +222,5 @@ plt.tight_layout()
 plt.savefig('/figures/umap_cell_type_low_knn&noise_filt.png', dpi=300)
 
 #SAVE 
-adata_filtered.write('/home/brassl1/scRNA/Diane/adata_highconf_filtered_6oct25.h5ad')
+adata_filtered.write('/filepath/adata_highconf_filtered_6oct25.h5ad')
 
