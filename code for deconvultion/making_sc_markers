@@ -13,7 +13,7 @@ from collections import Counter
 # Load the single-cell data
 adata = ad.read_h5ad('/filepath/raw_sc_data_24jul24.h5ad')
 
-# Define PBMC cell types 
+# Define PBMC cell types (optional) 
 pbmc_types = ["Age-associated B cells", "B cells", "CD16- NK cells", "CD16+ NK cells",
                 "Classical monocytes", "CRTAM+ gamma-delta T cells", "Cycling T cells", 
                 "DC1", "DC2", "Follicular helper T cells", "gamma-delta T cells", 
