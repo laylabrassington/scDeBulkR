@@ -13,7 +13,7 @@ library(RColorBrewer)
 library(tidyr)
 library(colorspace)
 
-adata <- readH5AD("/home/brassl1/scRNA/Diane/adata_highconf_filtered_6oct25.h5ad")
+adata <- readH5AD("/filepath/adata_highconf_filtered_6oct25.h5ad")
 
 umap_coords <- reducedDims(adata)$X_umap  
 umap_df <- as.data.frame(umap_coords)
@@ -36,4 +36,4 @@ umap_df$material_wealth <- adata$material_wealth
 umap_df$traditional_diet_score <- adata$traditional_diet_score
 umap_df$market_diet_index <- adata$market_diet_index
 
-#saveRDS(umap_df, "~/scRNA/plots/umap_plot_df.rds")
+#saveRDS(umap_df, "/filepath/umap_plot_df.rds")
