@@ -9,13 +9,13 @@ import celltypist
 from collections import Counter
 from scipy import sparse
 from sklearn.cluster import DBSCAN
-adata = ad.read_h5ad('/home/brassl1/scRNA/Diane/raw_sc_data_24jul24.h5ad')
+adata = ad.read_h5ad('/filepath/raw_sc_data_24jul24.h5ad')
 
 import matplotlib.pyplot as plt
 plt.switch_backend('Agg') 
 
 sc.settings.autoshow = False
-sc.settings.figdir = '/home/brassl1/scRNA/Diane/figures' 
+sc.settings.figdir = '/filepath/figures' 
 
 sc.pl.umap(
     adata,
@@ -29,7 +29,7 @@ sc.pl.umap(
 
 plt.gcf().set_size_inches(10, 8)
 plt.tight_layout()
-plt.savefig('/home/brassl1/scRNA/Diane/figures/umap_cell_type_low_big.png', dpi=300)
+plt.savefig('/filepath/figures/umap_cell_type_low_big.png', dpi=300)
 
 
 sc.pl.umap(
@@ -44,7 +44,7 @@ sc.pl.umap(
 
 plt.gcf().set_size_inches(10, 8)
 plt.tight_layout()
-plt.savefig('/home/brassl1/scRNA/Diane/figures/umap_cell_type_high_big.png', dpi=300)
+plt.savefig('/filepath/figures/umap_cell_type_high_big.png', dpi=300)
 
 
 
