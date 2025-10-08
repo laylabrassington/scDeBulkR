@@ -9,13 +9,13 @@ import pandas as pd
 import celltypist
 from collections import Counter
 
-adata = ad.read_h5ad('/home/brassl1/scRNA/Diane/adata_highconf_filtered_6oct25.h5ad')
+adata = ad.read_h5ad('/filepath/adata_highconf_filtered_6oct25.h5ad')
 
-markers = pd.read_csv("/home/brassl1/scRNA/Diane/unique_genes_7oct25.csv")                       
+markers = pd.read_csv("/filepath/unique_genes_7oct25.csv")                       
 
 marker_genes = markers['x'].unique()          
 adata.var.index = adata.var['gene_name'] 
 
 adata_filtered = adata[:, adata.var_names.isin(marker_genes)] 
 
-adata_filtered.write_h5ad("/home/brassl1/scRNA/Diane/filtered_genes_adata_7oct25.h5ad")
+adata_filtered.write_h5ad("/filepath/filtered_genes_adata_7oct25.h5ad")
