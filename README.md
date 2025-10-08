@@ -1,5 +1,22 @@
 # scDeBulkR
 
+## order of scripts for updated code 8oct25
+1. making_e_this.R
+2. plot_old_umap.py
+3. removing_low_confidence_cells.py
+4. extra_cell_filtering.py
+5. sc_markers.py
+6. getting_gene_lists.R
+7. filtering_sc_data.py
+8. prep_data_for_deconvo.R
+9. bseqsc_job_code.R
+10. bseqsc_job_submission.sh
+
+
+
+
+
+
 ## step 0: (*added 6oct25) filtering single cell data to remove outliers 
 sc_data_pre_processing
 
