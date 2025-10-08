@@ -1,4 +1,4 @@
-setwd('~/scRNA/Diane/')
+setwd('/filepath/')
 library(Biobase)
 dat = readRDS('17apr25_voomWithQualityWeights_normalized.rds')
 e.keep = dat$E
