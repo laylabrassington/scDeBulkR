@@ -1,10 +1,10 @@
-setwd('~/scRNA/Diane/')
+setwd('/filepath/')
 
 library(Seurat)
 library(zellkonverter)
 library(SummarizedExperiment)
 
-adata <- readH5AD("/home/brassl1/scRNA/Diane/filtered_genes_adata_7oct25.h5ad") 
+adata <- readH5AD("/filepath/filtered_genes_adata_7oct25.h5ad") 
 colnames(colData(adata))[colnames(colData(adata)) == "cell_type_low"] <- "cell_type"
 
 # Convert to Seurat object
