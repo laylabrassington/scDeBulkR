@@ -1,11 +1,11 @@
 version
 
 print("loading packages")
-.libPaths("~/R_singularity/4.4.2")
+.libPaths("/filepath/R_singularity/4.4.2")
 library(readr)
 library(bseqsc)
 
-setwd('/home/brassl1/scRNA/Diane/bseqsc_job/')
+setwd('/filepath/bseqsc_job/')
 
 print("loading data")
 e_this <- readRDS("e_this_7oct25_model.rds")
