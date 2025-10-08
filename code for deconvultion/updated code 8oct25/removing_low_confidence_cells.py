@@ -10,7 +10,7 @@ sc.pl.umap(
 
 plt.gcf().set_size_inches(10, 8)
 plt.tight_layout()
-plt.savefig('/home/brassl1/scRNA/Diane/figures/umap_confidence.png', dpi=300)
+plt.savefig('/filepath/figures/umap_confidence.png', dpi=300)
 
 # --- 1. Filter out low-confidence cells ---
 print(f"Starting with {adata.n_obs} total cells")
@@ -39,7 +39,7 @@ sc.pl.umap(
 
 plt.gcf().set_size_inches(10, 8)
 plt.tight_layout()
-plt.savefig('/home/brassl1/scRNA/Diane/figures/umap_new_clusters.png', dpi=300)
+plt.savefig('/filepath/figures/umap_new_clusters.png', dpi=300)
 
 sc.pl.umap(
     adata_highconf,
@@ -52,7 +52,7 @@ sc.pl.umap(
 
 plt.gcf().set_size_inches(10, 8)
 plt.tight_layout()
-plt.savefig('/home/brassl1/scRNA/Diane/figures/umap_cell_type_high_new_clusters.png', dpi=300)
+plt.savefig('/filepath/figures/umap_cell_type_high_new_clusters.png', dpi=300)
 
 
 sc.pl.umap(
@@ -66,6 +66,6 @@ sc.pl.umap(
 
 plt.gcf().set_size_inches(10, 8)
 plt.tight_layout()
-plt.savefig('/home/brassl1/scRNA/Diane/figures/umap_cell_type_low_new_clusters.png', dpi=300)
+plt.savefig('/filepath/figures/umap_cell_type_low_new_clusters.png', dpi=300)
 
 
