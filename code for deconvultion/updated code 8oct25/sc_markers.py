@@ -10,7 +10,7 @@ import celltypist
 from collections import Counter
 
 # Load the single-cell data
-adata = ad.read_h5ad('/home/brassl1/scRNA/Diane/adata_highconf_filtered_6oct25.h5ad')
+adata = ad.read_h5ad('/filepath/adata_highconf_filtered_6oct25.h5ad')
 
 
 group_counts = Counter(adata.obs['cell_type_low'])
@@ -39,4 +39,4 @@ groups = adata_filtered.obs['cell_type_low'].unique()
 markers_list = [sc.get.rank_genes_groups_df(adata_filtered, group=grp) for grp in groups]
 markers = pd.concat(markers_list, keys=groups, names=['group'])
 
-markers.reset_index().to_csv("/home/brassl1/scRNA/Diane/sc_markers_6oct25.csv", index=False)
+markers.reset_index().to_csv("/filepath/sc_markers_6oct25.csv", index=False)
