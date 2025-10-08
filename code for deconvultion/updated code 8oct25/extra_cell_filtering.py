@@ -45,7 +45,7 @@ sc.pl.umap(
 
 plt.gcf().set_size_inches(10, 8)
 plt.tight_layout()
-plt.savefig('/home/brassl1/scRNA/Diane/figures/umap_cell_type_high_knn_filt.png', dpi=300)
+plt.savefig('/filepath/figures/umap_cell_type_high_knn_filt.png', dpi=300)
 
 
 sc.pl.umap(
@@ -59,7 +59,7 @@ sc.pl.umap(
 
 plt.gcf().set_size_inches(10, 8)
 plt.tight_layout()
-plt.savefig('/home/brassl1/scRNA/Diane/figures/umap_cell_type_low_knn_filt.png', dpi=300)
+plt.savefig('/filepath/figures/umap_cell_type_low_knn_filt.png', dpi=300)
 
 
 umap = adata_knn_filtered.obsm['X_umap']
@@ -89,7 +89,7 @@ sc.pl.umap(
 
 plt.gcf().set_size_inches(10, 8)
 plt.tight_layout()
-plt.savefig('/home/brassl1/scRNA/Diane/figures/umap_cell_type_high_knn&noise_filt.png', dpi=300)
+plt.savefig('/filepath/figures/umap_cell_type_high_knn&noise_filt.png', dpi=300)
 
 sc.pl.umap(
     adata_filtered,
@@ -102,7 +102,7 @@ sc.pl.umap(
 
 plt.gcf().set_size_inches(15, 10)
 plt.tight_layout()
-plt.savefig('/home/brassl1/scRNA/Diane/figures/umap_cell_type_low_knn&noise_filt.png', dpi=300)
+plt.savefig('/filepath/figures/umap_cell_type_low_knn&noise_filt.png', dpi=300)
 
 #SAVE 
-adata_filtered.write('/home/brassl1/scRNA/Diane/adata_highconf_filtered_6oct25.h5ad')
+adata_filtered.write('/filepath/adata_highconf_filtered_6oct25.h5ad')
