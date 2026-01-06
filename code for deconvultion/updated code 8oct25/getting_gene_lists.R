@@ -18,7 +18,7 @@ for (i in seq_along(celltypes)) {
 markers[[i]] <- subset(
 filtered_sc_markers,
 group == celltypes[i] &
-pvals_adj > specificity_cutoff)$names
+pvals_adj < specificity_cutoff)$names
 }
 names(markers) <- celltypes
 save_path <- "/filepath/markers_7oct25.rds"
