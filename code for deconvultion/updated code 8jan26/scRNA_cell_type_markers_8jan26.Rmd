@@ -1,0 +1,606 @@
+---
+title: "scRNA_cell_type_markers"
+author: "layla"
+date: "2026-01-08"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE}
+library(Seurat)
+library(Matrix)
+library(zellkonverter)
+library(SummarizedExperiment)
+library(SingleCellExperiment)
+library(dplyr)
+library(ggplot2)
+library(ggrastr)
+library(patchwork)
+```
+
+read in data, convert to Seurat, and clean up 
+```{r message=FALSE, warning=FALSE}
+adata <- readH5AD("filtered_genes_adata_26nov25.h5ad") 
+colnames(colData(adata))[colnames(colData(adata)) == "cell_type_high"] <- "cell_type"
+
+#build Seurat object on raw counts 
+counts <- assay(adata, "X_raw")
+seurat_obj <- CreateSeuratObject(counts = counts, meta.data = as.data.frame(colData(adata)))
+
+#add log-normalized data as a layer called "data"
+seurat_obj[["RNA"]] <- SetAssayData(object = seurat_obj[["RNA"]], layer = "data", new.data = assay(adata, "X"))
+
+#add UMAp to Seurat object 
+umap_mat <- reducedDim(adata, "X_umap")
+colnames(umap_mat) <- c("UMAP_1", "UMAP_2")
+identical(colnames(seurat_obj), rownames(umap_mat))
+
+seurat_obj[["umap"]] <- CreateDimReducObject(embeddings = umap_mat, key = "UMAP_", assay = DefaultAssay(seurat_obj))
+
+# Count cells per cell_type
+celltype_counts <- seurat_obj@meta.data %>% count(cell_type)
+
+# Cell types with > 1 cell
+keep_celltypes <- celltype_counts %>% filter(n > 1) %>% pull(cell_type)
+
+# Subset Seurat object
+seurat_filt <- subset(seurat_obj, subset = cell_type %in% keep_celltypes)
+
+#filter for high probability cells 
+seurat_filt_highprob <- subset(seurat_filt, subset = cell_type_high_prob > 0.7)
+seurat_filt = seurat_filt_highprob
+```
+
+called (broad) cell type by celltypist 
+```{r}
+DimPlot(seurat_filt,reduction = "umap",group.by = "cell_type")
+```
+
+called (broad) cell type by celltypist 
+```{r}
+DimPlot(seurat_filt,reduction = "umap",group.by = "cell_type_low")
+```
+
+
+confidence of the broad calls 
+```{r}
+df <- cbind(Embeddings(seurat_filt, "umap"), seurat_filt@meta.data)
+hist(df$cell_type_high_prob, 100)
+ggplot(df, aes(UMAP_1, UMAP_2, color = cell_type_high_prob)) + geom_point_rast(size = 0.5) + theme_bw()
+```
+
+confidence of the more specific calls 
+```{r}
+hist(df$cell_type_low_prob, 100)
+ggplot(df, aes(UMAP_1, UMAP_2, color = cell_type_low_prob)) + geom_point_rast(size = 0.5) + theme_bw()
+```
+
+
+
+plotting GE of marker genes onto clusters 
+-----------------------------------------------------------------
+
+figuring out T cell clusters 
+
+
+
+major t cell marker
+```{r}
+FeaturePlot(seurat_filt, features = "CD3D", reduction = "umap")
+```
+
+
+supposed to be helper t cells (CD4) but all T cells light up 
+```{r}
+FeaturePlot(seurat_filt, features = "IL7R", reduction = "umap")
+```
+
+cytotoxic t cell (CD8)
+```{r}
+FeaturePlot(seurat_filt, features = "CD8A", reduction = "umap")
+```
+
+T regs (CD4)
+```{r}
+FeaturePlot(seurat_filt, features = "FOXP3", reduction = "umap")
+```
+
+
+Th2 (CD4)
+```{r}
+FeaturePlot(seurat_filt, features = "GATA3", reduction = "umap")
+```
+
+another CD4 marker 
+```{r}
+FeaturePlot(seurat_filt, features = "CD4", reduction = "umap")
+```
+
+
+
+
+
+double checking other cell types 
+----------------------------------------------
+
+monocytes (called correctly)
+```{r}
+FeaturePlot(seurat_filt, features = "LYZ", reduction = "umap")
+```
+
+
+distinguish CD14 high or low monocytes (aka shoudl only be in monocytes)
+```{r}
+FeaturePlot(seurat_filt, features = "CD14", reduction = "umap")
+```
+
+B cells (called correctly)
+```{r}
+FeaturePlot(seurat_filt, features = "MS4A1", reduction = "umap")
+```
+
+
+NK cells (kind of overlap with the CD8 T cells)
+```{r}
+FeaturePlot(seurat_filt, features = "NKG7", reduction = "umap")
+```
+
+
+"adaptive" NK cells 
+```{r}
+FeaturePlot(seurat_filt, features = "B3GAT1", reduction = "umap")
+```
+
+NK (CD16 + markers)
+```{r}
+FeaturePlot(seurat_filt, features = "FCGR3A", reduction = "umap")
+FeaturePlot(seurat_filt, features = "GNLY", reduction = "umap")
+FeaturePlot(seurat_filt, features = "IGFBP7", reduction = "umap")
+FeaturePlot(seurat_filt, features = "GZMB", reduction = "umap")
+FeaturePlot(seurat_filt, features = "SPON2", reduction = "umap")
+FeaturePlot(seurat_filt, features = "SH2D1B", reduction = "umap")
+```
+
+
+
+
+finding marker genes and most highly expressed genes per cluster 
+---------------------------------------------------------------------
+
+
+```{r}
+DimPlot(seurat_filt, reduction = "umap", group.by = "leiden", label = TRUE, repel = TRUE)
+```
+
+
+
+
+this finds genes specifically enriched in a cluster compared to all others
+```{r}
+seurat_filt2 = seurat_filt
+Idents(seurat_filt2) <- "leiden"
+```
+
+cluster 11 (naive CD8 T cells, differentiated but not activated)
+```{r warning=FALSE}
+markers_cl11 <- FindMarkers(seurat_filt2, ident.1 = "11", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl11 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(5)
+```
+
+cluster 0 is cytotoxic cells (NK)
+```{r warning=FALSE}
+markers_cl0 <- FindMarkers(seurat_filt2, ident.1 = "0", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl0 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+cluster 6 most likely to be activated CD4 T cells (Tfh cells bc ICOS is top gene)
+```{r warning=FALSE}
+markers_cl6 <- FindMarkers(seurat_filt2, ident.1 = "6", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl6 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(5)
+```
+
+
+cluster 2 (all markers for naive t cells)
+```{r warning=FALSE}
+markers_cl2 <- FindMarkers(seurat_filt2, ident.1 = "2", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl2 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+cluster 5 (activated/memory CD4)
+```{r warning=FALSE}
+markers_cl5 <- FindMarkers(seurat_filt2, ident.1 = "5", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl5 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+
+cluster 5 (activated/memory CD4)
+```{r warning=FALSE}
+markers_cl5 <- FindMarkers(seurat_filt2, ident.1 = "5", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl5 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+
+
+clusters 7, 8, and 13 are all kind of on top of each other (CD4 with def some Tregs in there) 
+
+cluster 7 
+```{r warning=FALSE}
+markers_cl7 <- FindMarkers(seurat_filt2, ident.1 = "7", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl7 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+cluster 8 
+```{r warning=FALSE}
+markers_cl8 <- FindMarkers(seurat_filt2, ident.1 = "8", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl8 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+cluster 13 
+```{r warning=FALSE}
+markers_cl13 <- FindMarkers(seurat_filt2, ident.1 = "13", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl13 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+
+
+
+cluster 3 (NK)
+```{r warning=FALSE}
+markers_cl3 <- FindMarkers(seurat_filt2, ident.1 = "3", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl3 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+
+cluster 14  (plasma for sure)
+```{r warning=FALSE}
+markers_cl14 <- FindMarkers(seurat_filt2, ident.1 = "14", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl14 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+
+cluster 21 DCs for sure and then some of the genes are canonical plasmacytoid dendritic cell markers 
+```{r warning=FALSE}
+markers_cl21 <- FindMarkers(seurat_filt2, ident.1 = "21", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl21 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+cluster 22 (classic DC)
+```{r warning=FALSE}
+markers_cl22 <- FindMarkers(seurat_filt2, ident.1 = "22", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl22 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+cluster 12 (MAIT)
+```{r warning=FALSE}
+markers_cl12 <- FindMarkers(seurat_filt2, ident.1 = "12", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl12 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+cluster 18 (MAIT)
+```{r warning=FALSE}
+markers_cl18 <- FindMarkers(seurat_filt2, ident.1 = "18", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl18 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+cluster 19 (idk)
+```{r warning=FALSE}
+markers_cl19 <- FindMarkers(seurat_filt2, ident.1 = "19", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl19 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+cluster 15 (platlets)
+```{r warning=FALSE}
+markers_cl15 <- FindMarkers(seurat_filt2, ident.1 = "15", assay = "RNA", slot = "data", min.pct = 0.25, logfc.threshold = 0.25)
+markers_cl15 %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+```
+
+
+
+
+reassigning cell type 
+------------------------------------------
+
+high confidence cell types: 
+```{r warning=FALSE}
+seurat_filt$cell_type_LB_highconf <- "unassigned"
+expr_matrix <- Seurat::GetAssayData(seurat_filt, assay = "RNA", slot = "data")
+```
+
+monocytes
+```{r}
+genes_of_interest <- c("LYZ", "CD14")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt$cell_type_LB_highconf[seurat_filt$leiden %in% c("10", "16") & avg_expr > 1.5] <- "Monocyte"
+```
+
+
+B cells 
+```{r}
+genes_of_interest <- c("MS4A1")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt$cell_type_LB_highconf[seurat_filt$leiden %in% c("1","4","9","20") & avg_expr > 0] <- "B cell"
+```
+
+DC
+```{r}
+genes_of_interest <- c("CLEC4C", "SERPINF1", "CUEDC1", "LAMP5", "PPM1J", "CLEC10A", "FPR3", "ZNF503", "CD1C", "CYP2S1")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt$cell_type_LB_highconf[seurat_filt$leiden %in% c("21", "22") & avg_expr > 0] <- "DC"
+```
+
+platelets 
+```{r}
+genes_of_interest <- c("ITGB3", "TUBB1", "PRKAR2B", "TRIM58", "ITGA2B")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt$cell_type_LB_highconf[seurat_filt$leiden==15 & avg_expr > 0] <- "Platelets"
+```
+
+plasma
+```{r}
+genes_of_interest <- c("JCHAIN")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt$cell_type_LB_highconf[seurat_filt$leiden==14 & avg_expr > 0] <- "Plasma"
+```
+
+NK 
+```{r}
+genes_of_interest <- c("SPON2", "S1PR5", "IL18RAP", "C1orf21", "CLIC3", "GZMH", "NKG7", "FGFBP2", "CX3CR1", "CST7", "SH2D1B", "IGFBP7")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt$cell_type_LB_highconf[seurat_filt$leiden %in% c("0", "3", "17") & avg_expr > 0] <- "NK"
+```
+
+T cells 
+```{r}
+genes_of_interest <- c("RORC", "GATA3", "FUT7", "TNFRSF4", "NPDC1", "CCR4", "CD40LG", "MAF", "CD4", "FOXP3", "RTKN2", "IL2RA", "CLEC4C", "SERPINF1", "CUEDC1", "CD248", "NELL2", "LRRN3", "ICOS", "RHPN1", "ANO9", "EGR1", "FOSB", "CXCR6", "LTK", "SCART1", "PLXND1", "CD8A")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt$cell_type_LB_highconf[seurat_filt$leiden %in% c("5", "7", "8", "13", "2", "11", "6", "12", "18") & avg_expr > -0.25] <- "T cell"
+```
+
+
+```{r}
+table(seurat_filt$cell_type_LB_highconf)
+seurat_filt_new <- subset(seurat_filt, subset = cell_type_LB_highconf != "unassigned")
+DimPlot(seurat_filt_new,reduction = "umap",group.by = "cell_type_LB_highconf")
+```
+
+save 
+```{r}
+#saveRDS(seurat_filt_new, file = "/home/brassl1/scRNA/cell_type_markers_and_deconvo/seurat_obj_highconf_8jan26.rds")
+```
+
+split out T cells 
+```{r warning=FALSE}
+seurat_filt_new$cell_type_LB_mediumconf <- "unassigned"
+expr_matrix <- Seurat::GetAssayData(seurat_filt_new, assay = "RNA", slot = "data")
+```
+
+```{r}
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$cell_type_LB_highconf == "Monocyte"] <- "Monocyte"
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$cell_type_LB_highconf == "B cell"] <- "B cell"
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$cell_type_LB_highconf == "Platelets"] <- "Platelets"
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$cell_type_LB_highconf == "Plasma"] <- "Plasma"
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$cell_type_LB_highconf == "NK"] <- "NK"
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$cell_type_LB_highconf == "DC"] <- "DC"
+```
+
+CD4
+```{r}
+genes_of_interest <- c("RORC", "GATA3", "FUT7", "TNFRSF4", "NPDC1", "CCR4", "CD40LG", "MAF", "CD4", "FOXP3", "RTKN2", "IL2RA", "ICOS", "RHPN1", "ANO9")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$leiden %in% c("5", "7", "8", "13", "6") & avg_expr > -0.25] <- "CD4"
+```
+
+CD8
+```{r}
+genes_of_interest <- c("CD248" , "NELL2"  ,"LRRN3"  ,"CD8A"  , "OXNAD1", "PDE3B" , "CRTAM"  ,"PCED1B", "CD7"  ,  "KLRK1", "LTK", "SCART1", "PLXND1" , "EGR1", "FOSB", "CXCR6" )
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$leiden %in% c("11", "12", "18") & avg_expr > -0.25] <- "CD8"
+```
+
+naive
+```{r}
+genes_of_interest <- c("SULT1B1", "MAL", "LEF1", "TCF7", "NOG", "TRABD2A", "ITGA6", "CCR7", "LRRN3", "OXNAD1")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$leiden %in% c("2") & avg_expr > -0.5] <- "Naive T cell"
+```
+
+
+```{r}
+table(seurat_filt_new$cell_type_LB_mediumconf)
+seurat_filt_new2 <- subset(seurat_filt_new, subset = cell_type_LB_mediumconf != "unassigned")
+DimPlot(seurat_filt_new2,reduction = "umap",group.by = "cell_type_LB_mediumconf")
+```
+
+save 
+```{r}
+#saveRDS(seurat_filt_new2, file = "/home/brassl1/scRNA/cell_type_markers_and_deconvo/seurat_obj_mediumconf_8jan26.rds")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+from 1/7/26
+assign medium confidence subtypes: 
+```{r warning=FALSE}
+seurat_filt_new$cell_type_LB_mediumconf <- "unassigned"
+expr_matrix <- Seurat::GetAssayData(seurat_filt_new, assay = "RNA", slot = "data")
+```
+
+```{r}
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$cell_type_LB_highconf == "Monocyte"] <- "Monocyte"
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$cell_type_LB_highconf == "B cell"] <- "B cell"
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$cell_type_LB_highconf == "Platelets"] <- "Platelets"
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$cell_type_LB_highconf == "Plasma"] <- "Plasma"
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$cell_type_LB_highconf == "NK"] <- "NK"
+```
+
+pDC
+```{r}
+genes_of_interest <- c("CLEC4C", "SERPINF1", "CUEDC1", "LAMP5", "PPM1J", "RASD1", "PLD4", "MYCL", "TLR9", "CCDC50")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$leiden=="21" & avg_expr > 0] <- "pDC"
+```
+
+cDC
+```{r}
+genes_of_interest <- c("CLEC10A", "FPR3", "ZNF503", "CD1C", "CYP2S1", "TNFSF9", "ATF5", "MS4A4E", "SIGLEC1", "MPZL2")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$leiden=="22" & avg_expr > 0] <- "cDC"
+```
+
+CD4
+```{r}
+genes_of_interest <- c("RORC", "GATA3", "FUT7", "TNFRSF4", "NPDC1", "CCR4", "CD40LG", "MAF", "CD4", "FOXP3", "RTKN2", "IL2RA", "ICOS", "RHPN1", "ANO9")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$leiden %in% c("5", "7", "8", "13", "6") & avg_expr > -0.25] <- "CD4"
+```
+
+CD8
+```{r}
+genes_of_interest <- c("CD248" , "NELL2"  ,"LRRN3"  ,"CD8A"  , "OXNAD1", "PDE3B" , "CRTAM"  ,"PCED1B", "CD7"  ,  "KLRK1")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$leiden %in% c("11") & avg_expr > -0.25] <- "CD8"
+```
+
+MAIT 
+```{r}
+genes_of_interest <- c("EGR1", "FOSB", "CXCR6", "B3GALT2", "CCR1", "LTK", "SCART1", "PLXND1", "ZBTB16", "GZMK")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$leiden %in% c("12", "18") & avg_expr > -0.25] <- "MAIT"
+```
+
+naive
+```{r}
+genes_of_interest <- c("SULT1B1", "MAL", "LEF1", "TCF7", "NOG", "TRABD2A", "ITGA6", "CCR7", "LRRN3", "OXNAD1")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new$cell_type_LB_mediumconf[seurat_filt_new$leiden %in% c("2") & avg_expr > -0.25] <- "Naive T cell"
+```
+
+
+```{r}
+table(seurat_filt_new$cell_type_LB_mediumconf)
+seurat_filt_new2 <- subset(seurat_filt_new, subset = cell_type_LB_mediumconf != "unassigned")
+DimPlot(seurat_filt_new2,reduction = "umap",group.by = "cell_type_LB_mediumconf")
+```
+
+
+
+assign kinda confidence subtypes: 
+```{r warning=FALSE}
+seurat_filt_new2$cell_type_LB_kindaconf <- "unassigned"
+expr_matrix <- Seurat::GetAssayData(seurat_filt_new2, assay = "RNA", slot = "data")
+```
+
+```{r}
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "Monocyte"] <- "Monocyte"
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "B cell"] <- "B cell"
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "Platelets"] <- "Platelets"
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "Plasma"] <- "Plasma"
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "pDC"] <- "pDC"
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "cDC"] <- "cDC"
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "MAIT"] <- "MAIT"
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "Naive T cell"] <- "Naive T cell"
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "CD8"] <- "CD8"
+```
+
+CD16+ NK
+```{r}
+genes_of_interest <- c("SH2D1B", "IGFBP7")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "NK" & avg_expr > 0] <- "CD16 NK"
+```
+
+
+NK
+```{r}
+genes_of_interest <- c("SH2D1B", "IGFBP7")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "NK" & avg_expr < 0] <- "NK"
+```
+
+
+Treg
+```{r}
+genes_of_interest <- c("FOXP3")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "CD4" & seurat_filt_new2$leiden %in% c("7", "8", "13") & avg_expr > 0] <- "Treg"
+```
+
+Tfh
+```{r}
+genes_of_interest <- c("ICOS", "RHPN1", "ANO9", "PGGHG", "HAPLN3")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "CD4" & seurat_filt_new2$leiden %in% c("6") & avg_expr > 0] <- "Tfh"
+```
+
+
+CD4 general 
+```{r}
+seurat_filt_new2$cell_type_LB_kindaconf[seurat_filt_new2$cell_type_LB_mediumconf == "CD4" & seurat_filt_new2$cell_type_LB_kindaconf == "unassigned"] <- "CD4"
+```
+
+```{r}
+DimPlot(seurat_filt_new2,reduction = "umap",group.by = "cell_type_LB_kindaconf")
+```
+
+
+
+
+
+
