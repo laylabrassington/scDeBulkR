@@ -1,5 +1,13 @@
 # scDeBulkR
 
+
+## order of scripts for updated code 8jan26
+- starts with the adata object from extra_cell_filtering.py from 8oct25
+1. scRNA_cell_type_markers.Rmd
+
+
+
+
 ## order of scripts for updated code 8oct25
 1. making_e_this.R
 2. plot_old_umap.py
