@@ -10,5 +10,5 @@ pipeline based on: https://github.com/shenorrLabTRDF/bseqsc
 5. run_bseqsc.R
 
 ## other things 
-need to have CIBERSORT.R in /home/user/R-data/bseqsc
-need to have a python environment see python_env.py
+- need to have CIBERSORT.R in /home/user/R-data/bseqsc
+- need to have a python environment see python_env.py
