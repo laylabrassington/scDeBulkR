@@ -1,0 +1,16 @@
+
+module load miniconda3/23.9.0-0
+conda create -n scRNA_data_processing
+conda activate scRNA_data_processing
+
+conda install conda=25.3.0
+
+#try bioconda 
+conda install bioconda::anndata 
+conda install bioconda::scanpy  
+conda install -c bioconda -c conda-forge celltypist
+
+#or try conda 
+conda install -c conda-forge numpy anndata
+conda install conda-forge::scanpy
+conda install conda-forge::celltypist

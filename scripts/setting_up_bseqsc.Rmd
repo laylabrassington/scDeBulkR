@@ -1,0 +1,169 @@
+
+ran on R 4.5.0
+
+```{r message=FALSE, warning=FALSE}
+library(Seurat)
+library(Matrix)
+library(zellkonverter)
+library(SummarizedExperiment)
+library(SingleCellExperiment)
+library(dplyr)
+library(magrittr)
+library(ggplot2)
+library(ggrastr)
+library(patchwork)
+library(Biobase)
+library(reticulate)
+library(readr)
+# reticulate::py_install(c("anndata"), pip = TRUE)
+```
+
+
+convert file from seurat back to scanpy 
+```{r}
+seurat_obj <- readRDS("/seurat_obj.rds")
+counts <- GetAssayData(seurat_obj, slot = "counts")
+seurat_obj <- CreateSeuratObject(counts = counts, meta.data = seurat_obj@meta.data)
+sce <- as.SingleCellExperiment(seurat_obj)
+
+adata=zellkonverter::SCE2AnnData(
+  sce,
+  X_name = "counts",   # main matrix in adata.X
+  assays = TRUE,          # include all assays (like "counts") in layers
+  colData = TRUE,         # preserve metadata
+  rowData = TRUE,         # preserve gene info
+  reducedDims = TRUE,     # preserve embeddings (UMAP, PCA, etc.)
+  metadata = TRUE,        # preserve SCE metadata
+  verbose = TRUE)
+
+# save to .h5ad
+# adata$write_h5ad("/adata_obj.h5ad")
+```
+
+in python now: calculate sc_markers using scanpy
+```{python}
+ml StdEnv/2020 python/3.11.2
+conda activate scRNA_data_processing
+python
+
+import anndata as ad
+import scanpy as sc
+import numpy as np
+import pandas as pd
+import celltypist
+from collections import Counter
+
+#load data 
+adata = ad.read_h5ad('/adata_obj.h5ad')
+
+#make sure every cell type has at least 1 cell 
+group_counts = Counter(adata.obs['cell_type'])
+
+adata.X[:5, :5].toarray()
+adata.layers["counts"] = adata.X.copy()
+sc.pp.normalize_total(adata, target_sum=1e4)
+sc.pp.log1p(adata)
+
+# assign adata.raw
+adata.raw = adata
+
+#check a few things 
+print(adata)
+print(adata.X[:5, :5])
+print(adata.raw.X[:5, :5])
+
+# adata.X already contains log-normalized data (your Seurat logcounts)
+# adata.layers['counts'] contains the raw counts from Seurat
+# copied adata.raw = adata, so now adata.raw.X also has the logcounts, matching adata.X
+
+# Identify markers by cell type
+# Run rank_genes_groups on the filtered dataset
+sc.tl.rank_genes_groups(adata, 'cell_type', method='t-test')
+
+# Get all group names
+groups = adata.obs['cell_type'].unique()
+
+# Create a dataframe for all groups
+markers_list = [sc.get.rank_genes_groups_df(adata, group=grp) for grp in groups]
+markers = pd.concat(markers_list, keys=groups, names=['group'])
+
+#markers.reset_index().to_csv("/sc_markers.csv", index=False)
+#adata.write("/adata_processed.h5ad")
+```
+
+```{r}
+sc_markers_ttest <- read_csv("/sc_markers.csv")
+
+e_this <- readRDS("/e_this_batch_corrected.rds")
+
+sc_markers_ttest %<>% filter(pvals_adj<0.05)
+markers_score_q <- sc_markers_ttest %>% group_by(group) %>%
+  filter(scores >= quantile(abs(scores), 0.90, na.rm = TRUE)) %>%
+  ungroup()
+
+markers_score_q_genes <- markers_score_q$names
+bulk_genes <- featureNames(e_this)
+matching_genes <- intersect(markers_score_q_genes, bulk_genes)
+length(matching_genes)
+filtered_sc_markers_ttest <- markers_score_q[markers_score_q$names %in% matching_genes, ]
+filtered_e.this <- e_this[matching_genes, ]
+unique_genes_ttest = unique(filtered_sc_markers_ttest$names)
+#write.csv(unique_genes_ttest, "unique_genes.csv", row.names = FALSE)
+```
+
+
+now need to make sure single cell data only has the matching/unique genes 
+```{python}
+ml StdEnv/2020 python/3.11.2
+conda activate scRNA_data_processing
+python
+
+import anndata as ad
+import scanpy as sc
+import numpy as np
+import pandas as pd
+
+adata = ad.read_h5ad('/adata_processed.h5ad')
+
+markers = pd.read_csv("/unique_genes.csv") 
+
+marker_genes = markers['x'].unique()
+
+adata_filtered = adata[:, adata.var_names.isin(marker_genes)] 
+
+#adata_filtered.write_h5ad("/filtered_genes_adata.h5ad")
+```
+
+
+prep everything to run the deconvolution 
+```{r}
+adata <- readH5AD("/filtered_genes_adata.h5ad") 
+
+# Convert to Seurat object
+tmp=assay(adata, "counts")
+seurat_obj <- CreateSeuratObject(counts = tmp)
+
+# Extract cell_type column
+cell_type <- colData(adata)$cell_type
+
+# Add to Seurat object's metadata
+seurat_obj$cell_type <- cell_type
+
+#make reference matrix
+ref_matrix <- AggregateExpression(seurat_obj, group.by = "cell_type", slot = "counts")
+B <- ref_matrix$RNA
+
+e_this <- readRDS("/e_this_batch_corrected.rds")
+e_this=as.matrix(exprs(e_this))
+
+#triple check genes match
+common_genes <- intersect(rownames(e_this), rownames(B)) 
+e_this <- e_this[common_genes, ] 
+B <- B[common_genes, ] 
+e_this=as.matrix(e_this)
+B=as.matrix(B)
+
+#save 
+# saveRDS(e_this, "e_this_model.rds")
+# saveRDS(B, "B_model.rds")
+```

@@ -1,0 +1,101 @@
+
+ran on R 4.5.0
+
+```{r message=FALSE, warning=FALSE}
+library(Seurat)
+library(Matrix)
+library(zellkonverter)
+library(SummarizedExperiment)
+library(SingleCellExperiment)
+library(dplyr)
+library(ggplot2)
+library(ggrastr)
+library(patchwork)
+```
+
+read in data, convert to Seurat, and clean up 
+```{r message=FALSE, warning=FALSE}
+adata <- readH5AD("adata_highconf_filtered.h5ad") 
+colnames(colData(adata))[colnames(colData(adata)) == "cell_type_high"] <- "cell_type"
+
+#build Seurat object on raw counts 
+counts <- assay(adata, "X_raw")
+seurat_obj <- CreateSeuratObject(counts = counts, meta.data = as.data.frame(colData(adata)))
+
+#add log-normalized data as a layer called "data"
+seurat_obj[["RNA"]] <- SetAssayData(object = seurat_obj[["RNA"]], layer = "data", new.data = assay(adata, "X"))
+
+#add UMAp to Seurat object 
+umap_mat <- reducedDim(adata, "X_umap")
+colnames(umap_mat) <- c("UMAP_1", "UMAP_2")
+identical(colnames(seurat_obj), rownames(umap_mat))
+
+seurat_obj[["umap"]] <- CreateDimReducObject(embeddings = umap_mat, key = "UMAP_", assay = DefaultAssay(seurat_obj))
+
+# Count cells per cell_type
+celltype_counts <- seurat_obj@meta.data %>% count(cell_type)
+
+# Cell types with > 1 cell
+keep_celltypes <- celltype_counts %>% filter(n > 1) %>% pull(cell_type)
+
+# Subset Seurat object
+seurat_filt <- subset(seurat_obj, subset = cell_type %in% keep_celltypes)
+
+#filter for high probability cells 
+seurat_filt_highprob <- subset(seurat_filt, subset = cell_type_high_prob > 0.7)
+seurat_filt = seurat_filt_highprob
+```
+
+look at confidence in existing cell calls 
+
+called (broad) cell type by celltypist 
+```{r}
+DimPlot(seurat_filt,reduction = "umap",group.by = "cell_type_high")
+```
+confidence of the broad calls 
+```{r}
+df <- cbind(Embeddings(seurat_filt, "umap"), seurat_filt@meta.data)
+hist(df$cell_type_high_prob, 100)
+ggplot(df, aes(UMAP_1, UMAP_2, color = cell_type_high_prob)) + geom_point_rast(size = 0.5) + theme_bw()
+```
+confidence of the more specific calls 
+```{r}
+hist(df$cell_type_low_prob, 100)
+ggplot(df, aes(UMAP_1, UMAP_2, color = cell_type_low_prob)) + geom_point_rast(size = 0.5) + theme_bw()
+```
+
+
+
+finding marker genes and most highly expressed genes per cluster 
+
+```{r}
+DimPlot(seurat_filt, reduction = "umap", group.by = "leiden", label = TRUE, repel = TRUE)
+```
+```{r}
+seurat_filt2 = seurat_filt
+Idents(seurat_filt2) <- "leiden"
+```
+
+this code finds genes enriched in a cluster compared to all others (only variable genes)
+```{r}
+markers_list_all <- FindAllMarkers(seurat_filt2, features = VariableFeatures(seurat_filt2), min.pct = 0.25, logfc.threshold = 0.25)
+```
+then for each cluster you can go in and look at the top genes to determine cell identity e.g. leiden 5
+```{r}
+markers_list_all %>% filter(cluster %in% c("5")) %>% dplyr::arrange(desc(avg_log2FC)) %>% head(10)
+#top markers for this cluster indicative of NK cells 
+c("KLRF1",  "SH2D1B", "SPON2",  "GNLY",   "CLIC3",  "NMUR1",  "KLRC1",  "ERBB2",  "DTHD1",  "GZMB")
+```
+
+re-assigning cell type for a leiden 
+```{r}
+seurat_filt$cell_type_new <- "unassigned"
+expr_matrix <- Seurat::GetAssayData(seurat_filt, assay = "RNA", slot = "data")
+```
+
+```{r}
+genes_of_interest <- c("KLRF1",  "SH2D1B", "SPON2",  "GNLY",   "CLIC3",  "NMUR1",  "KLRC1",  "ERBB2",  "DTHD1",  "GZMB")
+avg_expr <- Matrix::colMeans(expr_matrix[genes_of_interest, , drop = FALSE])
+hist(avg_expr)
+seurat_filt$cell_type_new[seurat_filt$leiden %in% c("5") & avg_expr > 0.5] <- "NK"
+```
